@@ -1,52 +1,102 @@
 import pygame
 from pygame import *
+from random import randint
 
-#Initialize pygame
 pygame.init()
 
-#We are creating variables to define the dimensions of the window, separately.
+clock = time.Clock()
 
-WINDOW_WIDTH = 900
-WINDOW_HEIGHT = 400
+WINDOW_WIDTH = 1100
+WINDOW_HEIGHT = 600
+
+
 WINDOW_RES = (WINDOW_WIDTH, WINDOW_HEIGHT)
 
-#Create Window
+WIDTH = 100
+HEIGHT = 100
+
+WHITE = (255, 255, 255)
+
+SPAWN_RATE = 360
+FRAME_RATE = 60
+
+
 GAME_WINDOW = display.set_mode(WINDOW_RES)
-#900 pixels for the width, 400 pixels for the height
+display.set_caption('Attack of the Vampire Pizzas!')
 
-display.set_caption("Tower Defense Game")
-
-background_img = image.load('restuarant.jpg')
-backgroung_surf = Surface.convert_alpha(background_img)
+background_img = image.load('restaurant.jpg')
+background_surf = Surface.convert_alpha(background_img)
 BACKGROUND = transform.scale(background_surf, (WINDOW_RES))
-Banana_img = image.load('Banana.png')
-Banana_surf = Surface.convert_alpha(Banana_img)
 
-BANANA_SPRITE = transform.scale(Banana_surf, (100, 100))
+pizza_img = image.load('vampire.png')
+pizza_surf =  Surface.convert_alpha(pizza_img)
+VAMPIRE_PIZZA = transform.scale(pizza_surf, (WIDTH, HEIGHT))
 
-#Display the enemy image to the screen
-GAME_WINDOW.blit(BANANA_SPRITE, (900, 400))
-VAMPIRE_PIZZA = transform.scale(pizza_surf, (100, 100))
-draw.circle(GAME_WINDOW, (0, 255, 0), (925, 425), 25, 0)
-draw.rect(GAME_WINDOW, (160, 82, 45), (895, 395, 110, 110), 5)
-draw.rect(GAME_WINDOW, (160, 82, 45), (895, 295, 110, 110), 0)
+class VampireSprite(sprite.Sprite):
+    def __init__(self):
+        super().__init__() 
+        self.speed = 2
+        self.lane = randint(0, 4)
+        all_vampires.add(self)
+        self.image = VAMPIRE_PIZZA.copy()
+        y = 50 + self.lane * 100
+        self.rect = self.image.get_rect(center = (1100, y))
+        
+    def update(self, game_window):
+        game_window.blit(BACKGROUND, (self.rect.x, self.rect.y), self.rect)
+        self.rect.x -= self.speed
+        game_window.blit(self.image, (self.rect.x, self.rect.y))
 
-GAME_WINDOW.blit(BANANA_SPRITE, (900, 400))
-GAME_WINDOW.blit(BACKROUND, (0,0))
-GAMEWINDOW.blit(VAMPIRE_PIZZA, (700, 300))
+class BackgroundTile(sprite.Sprite):
+   def  __init__(self, rect):
+        super().__init__()
+        self.effect = False
+        self.rect = rect
+
+all_vampires = sprite.Group()
+
+tile_grid = []
+tile_color = WHITE
+for row in range(6):
+    
+    row_of_tiles = []
+    tile_grid.append(row_of_tiles)
+    for column in range(11):
+        tile_rect = Rect(WIDTH * column, HEIGHT * row, WIDTH, HEIGHT)
+        new_tile = BackgroundTile(tile_rect)
+        row_of_tiles.append(new_tile)
 
 
-#A tuple is data type that contains data separated by commas, and contained within parentheses
 
-#Start Main Game Loop
+
+for row in range(6):
+    for column in range(11):
+        draw.rect(BACKGROUND, tile_color, (WIDTH * column, HEIGHT * row, WIDTH, HEIGHT),1)
+      
+GAME_WINDOW.blit(BACKGROUND, (0,0))
 game_running = True
 
 while game_running:
     for event in pygame.event.get():
-        #Exit the loop on quit
         if event.type == QUIT:
             game_running = False
-        display.update()
+
+        elif event.type == MOUSEBUTTONDOWN:
+            coordinates = mouse.get_pos()
+            x = coordinates[0]
+            y = coordinates[1]
+
+            tile_y = y // 100
+            tile_x = x // 100
+            tile_grid[tile_y][tile_x].effect = True
+
+    if randint(1, SPAWN_RATE) == 1:
+        VampireSprite()
+
+    for vampire in all_vampires:
+        vampire.update(GAME_WINDOW)
+
+    display.update()
+    clock.tick(FRAME_RATE)
 
 pygame.quit()
-    
